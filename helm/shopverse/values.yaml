@@ -44,8 +44,12 @@ mysql:
 # Shared
 # ──────────────────────────────────────
 ingress:
-  enabled: false
-  ingressClassName: traefik
-  annotations: {}
+  enabled: true
+  ingressClassName: alb
 
-jwtSecret: ""
+  annotations:
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80}]'
+
+jwtSecret: "shopverse-secret-key"
