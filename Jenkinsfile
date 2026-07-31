@@ -16,7 +16,7 @@ stages {
     stage('Checkout') {
         steps {
             git branch: 'main',
-            url: 'https://github.com/chaitramk23/shopverse.git'
+                url: 'https://github.com/chaitramk23/shopverse.git'
         }
     }
 
@@ -63,16 +63,13 @@ stages {
 
     stage('ECR Login') {
         steps {
-            withCredentials([[
-                $class: 'AmazonWebServicesCredentialsBinding',
-                credentialsId: 'aws-creds'
-            ]]) {
+            withAWS(credentials: 'aws-creds', region: 'us-east-1') {
                 sh '''
                 aws sts get-caller-identity
 
-                aws ecr get-login-password --region $AWS_REGION | \
+                aws ecr get-login-password --region us-east-1 | \
                 docker login --username AWS \
-                --password-stdin $ECR_REGISTRY
+                --password-stdin 835505307872.dkr.ecr.us-east-1.amazonaws.com
                 '''
             }
         }
@@ -108,10 +105,7 @@ stages {
 
     stage('Update Kubeconfig') {
         steps {
-            withCredentials([[
-                $class: 'AmazonWebServicesCredentialsBinding',
-                credentialsId: 'aws-creds'
-            ]]) {
+            withAWS(credentials: 'aws-creds', region: 'us-east-1') {
                 sh '''
                 aws eks update-kubeconfig \
                 --name $EKS_CLUSTER_NAME \
@@ -135,19 +129,10 @@ stages {
     stage('Verify Deployment') {
         steps {
             sh '''
-            echo "===== Nodes ====="
             kubectl get nodes
-
-            echo "===== Pods ====="
             kubectl get pods -n shopverse
-
-            echo "===== Services ====="
             kubectl get svc -n shopverse
-
-            echo "===== Ingress ====="
             kubectl get ingress -n shopverse
-
-            echo "===== Helm Release ====="
             helm list -n shopverse
             '''
         }
