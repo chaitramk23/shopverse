@@ -54,7 +54,10 @@ pipeline {
         stage('Trivy Scan') {
             steps {
                 sh '''
+                echo "Scanning Frontend Image..."
                 trivy image --exit-code 0 --severity HIGH,CRITICAL shopverse-frontend:scan
+
+                echo "Scanning Backend Image..."
                 trivy image --exit-code 0 --severity HIGH,CRITICAL shopverse-backend:scan
                 '''
             }
@@ -128,10 +131,19 @@ pipeline {
         stage('Verify Deployment') {
             steps {
                 sh '''
+                echo "===== Nodes ====="
                 kubectl get nodes
+
+                echo "===== Pods ====="
                 kubectl get pods -n shopverse
+
+                echo "===== Services ====="
                 kubectl get svc -n shopverse
+
+                echo "===== Ingress ====="
                 kubectl get ingress -n shopverse
+
+                echo "===== Helm Release ====="
                 helm list -n shopverse
                 '''
             }
