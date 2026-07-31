@@ -12,6 +12,13 @@ pipeline {
 
     stages {
 
+        stage('Checkout') {
+            steps {
+                git branch: 'main',
+                url: 'https://github.com/chaitramk23/shopverse.git'
+            }
+        }
+
         stage('Backend Tests') {
             steps {
                 dir('backend') {
@@ -48,7 +55,6 @@ pipeline {
             steps {
                 sh '''
                 trivy image --exit-code 1 --severity CRITICAL shopverse-frontend:scan
-
                 trivy image --exit-code 1 --severity CRITICAL shopverse-backend:scan
                 '''
             }
@@ -68,16 +74,6 @@ pipeline {
                     --password-stdin 835505307872.dkr.ecr.us-east-1.amazonaws.com
                     '''
                 }
-            }
-        }
-
-        stage('ECR Login') {
-            steps {
-                sh '''
-                aws ecr get-login-password --region us-east-1 | \
-                docker login --username AWS \
-                --password-stdin 835505307872.dkr.ecr.us-east-1.amazonaws.com
-                '''
             }
         }
 
@@ -109,7 +105,10 @@ pipeline {
 
         stage('Update Kubeconfig') {
             steps {
-                withAWS(credentials: 'aws-creds', region: 'us-east-1') {
+                withCredentials([[
+                    $class: 'AmazonWebServicesCredentialsBinding',
+                    credentialsId: 'aws-creds'
+                ]]) {
                     sh '''
                     aws eks update-kubeconfig \
                     --name $EKS_CLUSTER_NAME \
@@ -141,11 +140,8 @@ pipeline {
             steps {
                 sh '''
                 kubectl get nodes
-
                 kubectl get pods -n shopverse
-
                 kubectl get svc -n shopverse
-
                 kubectl get ingress -n shopverse
                 '''
             }
