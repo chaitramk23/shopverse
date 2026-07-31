@@ -2,10 +2,10 @@ pipeline {
     agent any
 
     environment {
-        AWS_REGION       = 'ap-south-1'
-        ECR_REGISTRY     = 'ACCOUNT_ID.dkr.ecr.ap-south-1.amazonaws.com'
-        EKS_CLUSTER_NAME = 'shopverse-cluster'
-        TF_STATE_BUCKET  = 'shopverse-tf-state'
+        TF_STATE_BUCKET  = 'shopverse-tf-statefile'
+        ECR_REGISTRY     = '835505307872.dkr.ecr.us-east-1.amazonaws.com'
+        EKS_CLUSTER_NAME = 'chaitra-cluster1'
+        AWS_REGION       = 'us-east-1'
 
         FRONTEND_IMAGE = "${ECR_REGISTRY}/shopverse-frontend:${BUILD_NUMBER}"
         BACKEND_IMAGE  = "${ECR_REGISTRY}/shopverse-backend:${BUILD_NUMBER}"
