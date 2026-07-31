@@ -111,6 +111,7 @@ pipeline {
 
                 echo "Scanning Frontend Image..."
 
+
                 trivy image \
                 --exit-code 0 \
                 --severity HIGH,CRITICAL \
@@ -119,6 +120,7 @@ pipeline {
 
 
                 echo "Scanning Backend Image..."
+
 
                 trivy image \
                 --exit-code 0 \
@@ -140,30 +142,28 @@ pipeline {
 
             steps {
 
+                sh '''
 
-                withCredentials([
-
-                    [$class: 'AmazonWebServicesCredentialsBinding',
-                    credentialsId: 'aws-creds']
-
-                ]) {
+                echo "Checking AWS Identity"
 
 
-                    sh '''
-
-                    aws sts get-caller-identity
+                aws sts get-caller-identity
 
 
 
-                    aws ecr get-login-password \
-                    --region $AWS_REGION | docker login \
-                    --username AWS \
-                    --password-stdin $ECR_REGISTRY
+                echo "Logging into Amazon ECR"
 
 
-                    '''
 
-                }
+                aws ecr get-login-password \
+                --region $AWS_REGION | \
+                docker login \
+                --username AWS \
+                --password-stdin $ECR_REGISTRY
+
+
+
+                '''
 
             }
 
@@ -179,6 +179,9 @@ pipeline {
 
                 sh '''
 
+                echo "Building Frontend Image"
+
+
                 docker build \
                 -t $FRONTEND_IMAGE \
                 -t $ECR_REGISTRY/shopverse-frontend:latest \
@@ -186,10 +189,14 @@ pipeline {
 
 
 
+                echo "Building Backend Image"
+
+
                 docker build \
                 -t $BACKEND_IMAGE \
                 -t $ECR_REGISTRY/shopverse-backend:latest \
                 ./backend
+
 
 
                 '''
@@ -206,8 +213,11 @@ pipeline {
 
             steps {
 
-
                 sh '''
+
+                echo "Pushing Frontend Images"
+
+
 
                 docker push $FRONTEND_IMAGE
 
@@ -215,9 +225,14 @@ pipeline {
 
 
 
+                echo "Pushing Backend Images"
+
+
+
                 docker push $BACKEND_IMAGE
 
                 docker push $ECR_REGISTRY/shopverse-backend:latest
+
 
 
                 '''
@@ -234,28 +249,31 @@ pipeline {
 
             steps {
 
+                sh '''
 
-                withCredentials([
-
-                    [$class: 'AmazonWebServicesCredentialsBinding',
-                    credentialsId: 'aws-creds']
-
-                ]) {
+                echo "Connecting to EKS Cluster"
 
 
-                    sh '''
 
-                    aws eks update-kubeconfig \
-                    --name $EKS_CLUSTER_NAME \
-                    --region $AWS_REGION
+                aws sts get-caller-identity
 
 
-                    kubectl get nodes
+
+                aws eks update-kubeconfig \
+                --name $EKS_CLUSTER_NAME \
+                --region $AWS_REGION
 
 
-                    '''
 
-                }
+                echo "Checking Kubernetes Nodes"
+
+
+
+                kubectl get nodes
+
+
+
+                '''
 
             }
 
@@ -271,10 +289,15 @@ pipeline {
 
                 sh '''
 
+                echo "Deploying ShopVerse using Helm"
+
+
+
                 helm upgrade --install shopverse ./helm/shopverse \
                 --namespace shopverse \
                 --create-namespace \
                 --wait
+
 
 
                 '''
@@ -291,10 +314,10 @@ pipeline {
 
             steps {
 
-
                 sh '''
 
                 echo "===== Nodes ====="
+
 
                 kubectl get nodes
 
@@ -302,11 +325,13 @@ pipeline {
 
                 echo "===== Pods ====="
 
+
                 kubectl get pods -n shopverse
 
 
 
                 echo "===== Services ====="
+
 
                 kubectl get svc -n shopverse
 
@@ -314,13 +339,16 @@ pipeline {
 
                 echo "===== Ingress ====="
 
+
                 kubectl get ingress -n shopverse
 
 
 
                 echo "===== Helm Release ====="
 
+
                 helm list -n shopverse
+
 
 
                 '''
@@ -339,7 +367,19 @@ pipeline {
 
         success {
 
-            echo 'ShopVerse Deployment Successful'
+            echo '''
+
+            =====================================
+
+            ShopVerse Deployment Successful
+
+            ECR Push Completed
+
+            EKS Helm Deployment Completed
+
+            =====================================
+
+            '''
 
         }
 
@@ -347,7 +387,17 @@ pipeline {
 
         failure {
 
-            echo 'ShopVerse Deployment Failed'
+            echo '''
+
+            =====================================
+
+            ShopVerse Deployment Failed
+
+            Check Jenkins Console Logs
+
+            =====================================
+
+            '''
 
         }
 
