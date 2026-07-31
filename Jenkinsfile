@@ -296,6 +296,8 @@ pipeline {
                 helm upgrade --install shopverse ./helm/shopverse \
                 --namespace shopverse \
                 --create-namespace \
+                --set frontend.image=$FRONTEND_IMAGE \
+                --set backend.image=$BACKEND_IMAGE \
                 --wait
 
 
@@ -309,7 +311,7 @@ pipeline {
 
 
 
-
+        
         stage('Verify Deployment') {
 
             steps {
