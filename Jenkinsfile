@@ -16,7 +16,7 @@ pipeline {
         stage('Checkout') {
             steps {
                 git branch: 'main',
-                url: 'https://github.com/your-org/shopverse.git'
+                url: 'https://github.com/chaitramk23/shopverse.git'
             }
         }
 
