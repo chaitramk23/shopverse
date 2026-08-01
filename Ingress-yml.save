@@ -1,0 +1,16 @@
+rtificate/7b1546c7-ed80-4e92-95b0-ac52461f5220
+
+spec:
+  ingressClassName: alb
+
+  rules:
+    - host: chaitra-movie.space
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend
+                port:
+                  number: 80
